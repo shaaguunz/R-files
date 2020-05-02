@@ -2,49 +2,41 @@
 # 2. Extract only the measurement on the mean and standard deviation
 # 3. use descriptive activity to name activities
 # 4. label appropriately
-# 5. create a independent tidy data set
+# Load activity labels + features
 library(reshape2)
-library(data.table)
+activityLabels <- read.table("UCI HAR Dataset/activity_labels.txt")
+activityLabels[,2] <- as.character(activityLabels[,2])
+features <- read.table("UCI HAR Dataset/features.txt")
+features[,2] <- as.character(features[,2])
 
-#the file is already downloaded and unzipped
-#loading all the datas
-x_test<-read.table("./UCI HAR Dataset/test/x_test.txt")
-y_test<-read.table("./UCI HAR Dataset/test/y_test.txt")
-subject_test<-read.table("./UCI HAR Dataset/test/subject_test.txt")
-
-
-x_train<-read.table("./UCI HAR Dataset/train/x_train.txt")
-y_train<-read.table("./UCI HAR Dataset/train/y_train.txt")
-subject_train<-read.table("./UCI HAR Dataset/train/subject_train.txt")
-
-#merging to create a new dataset   (vertically)
-x_merged<-rbind(x_test,x_train)
-y_merged<-rbind(y_test,y_train)
-subject_merged<-rbind(subject_test,subject_train)
+# Extract only the data on mean and standard deviation
+featuresWanted <- grep(".*mean.*|.*std.*", features[,2])
+featuresWanted.names <- features[featuresWanted,2]
+featuresWanted.names = gsub('-mean', 'Mean', featuresWanted.names)
+featuresWanted.names = gsub('-std', 'Std', featuresWanted.names)
+featuresWanted.names <- gsub('[-()]', '', featuresWanted.names)
 
 
-#adding new column name
-names_features<-read.table(".//UCI HAR DATASET//features.txt")
-names_features<-names_features$V2
-colnames(x_merged)<-names_features
+# Load the datasets
+train <- read.table("UCI HAR Dataset/train/X_train.txt")[featuresWanted]
+trainActivities <- read.table("UCI HAR Dataset/train/Y_train.txt")
+trainSubjects <- read.table("UCI HAR Dataset/train/subject_train.txt")
+train <- cbind(trainSubjects, trainActivities, train)
 
+test <- read.table("UCI HAR Dataset/test/X_test.txt")[featuresWanted]
+testActivities <- read.table("UCI HAR Dataset/test/Y_test.txt")
+testSubjects <- read.table("UCI HAR Dataset/test/subject_test.txt")
+test <- cbind(testSubjects, testActivities, test)
 
-# extracting only the measurements on mean and std 
-subset_merged<-x_merged[,grep("mean|std",colnames(x_merged))]
+# merge datasets and add labels
+allData <- rbind(train, test)
+colnames(allData) <- c("subject", "activity", featuresWanted.names)
 
-#descriptive names for cols
-names(y_merged)<-("ActivityID")
-names(x_merged)<-("ActivityLabel")
-names(subject_merged)<-"Subject"
+# turn activities & subjects into factors
+allData$activity <- factor(allData$activity, levels = activityLabels[,1], labels = activityLabels[,2])
+allData$subject <- as.factor(allData$subject)
 
-# creating a second independent dataset
-all_merged<-cbind(subject_merged,y_merged,x_merged)
-all_labels<-c("Subject","ActivityID","ActivityLabel")
+allData.melted <- melt(allData, id = c("subject", "activity"))
+allData.mean <- dcast(allData.melted, subject + activity ~ variable, mean)
 
-
-labels.data<-setdiff(colnames(all_merged),all_labels)
-data_melted<-melt(all_merged,mid=all_labels,measure.vars=labels.data,na.rm=TRUE)
-tidy.data<-dcast(data_melted,Subject+ActivityLabel~variable,mean)
-
-write.table(tidy.data,file=".//tidy_data.txt",row.names=FALSE)
-
+write.table(allData.mean, "tidy.txt", row.names = FALSE, quote = FALSE)
