@@ -5,7 +5,7 @@ library(ggplot2)
 NEI <- readRDS("summarySCC_PM25.rds")
 SCC <- readRDS("Source_Classification_Code.rds")
 
-LA<-NEI[with(NEI$fips=="06037"|NEI$fips=="24510"),]
+LA<-NEI[with(NEI,fips=="06037"|fips=="24510"),]
 
 #for motor vehicels source
 
