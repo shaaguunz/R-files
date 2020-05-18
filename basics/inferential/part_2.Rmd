@@ -1,0 +1,105 @@
+---
+title: "simulation part 2"
+author: "Shaaguunz"
+date: "5/18/2020"
+output: html_document
+---
+
+
+**Questions**
+Now in the second portion of the project, we're going to analyze the ToothGrowth data in the R datasets package.
+
+Load the ToothGrowth data and perform some basic exploratory data analyses
+Provide a basic summary of the data.
+Use confidence intervals and/or hypothesis tests to compare tooth growth by supp and dose. (Only use the techniques from class, even if there's other approaches worth considering)
+State your conclusions and the assumptions needed for your conclusions.
+
+
+**Load the data**
+```{r}
+library(ggplot2)
+data("ToothGrowth")
+```
+
+
+1.  summary of data
+
+```{r}
+head(ToothGrowth)
+```
+
+types of supplemennts and dosages
+
+```{r}
+table(ToothGrowth$supp)
+table(ToothGrowth$dose)
+```
+
+summary of ToothGrowth
+
+```{r}
+summary(ToothGrowth)
+
+```
+
+Correlation in ToothGrowth Data
+```{r}
+cor(ToothGrowth[sapply(ToothGrowth,is.numeric)])
+```
+
+so length and dosage have high correlation
+
+**Plotting**
+```{r}
+plt1<-ggplot(ToothGrowth,aes(x=factor(dose),y=len,fil=factor(dose)))
+plt1+geom_boxplot()+xlab("Dosage")+ylab("Length")
+
+```
+
+
+2.  Use confidence intervals and hypothesis tests to compare tooth growth by supp and dose
+
+95% interval
+```{r}
+Interval<-(mean(ToothGrowth$len)+c(-1,1)*qnorm(0.975)*sd(ToothGrowth$len)/sqrt(length(ToothGrowth$len)))
+Interval
+```
+
+T test by length and supplement
+
+```{r}
+t.test(len~supp,data=ToothGrowth)
+
+```
+
+so we cannot reject the null hypothesis
+
+T test of dosage level
+
+```{r}
+dos1<-subset(ToothGrowth,dose==0.5)
+dos2<-subset(ToothGrowth,dose==1)
+dos3<-subset(ToothGrowth,dose==2)
+
+
+t.test(len~supp,data=dos1)
+t.test(len~supp,data=dos2)
+t.test(len~supp,data=dos3)
+
+```
+
+
+for small and medium their p -values are small so we can reject the null hypothesis
+however fo big dosage we cannot reject the null hypothesis 
+
+
+
+3.   State your conclusions and the assumptions needed for your conclusions.
+
+
+The tooth length growth is not controlled by supplements
+
+For dosage level  0.5 and 1,  the Orange Juice has a higher effect on the length of tooth of Guinea Pigs than the Vitamin C.
+
+
+For dosage level 2, there are so such difference between Orange Juice and Vitamin C
